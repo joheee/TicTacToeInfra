@@ -1,0 +1,12 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfplan
+tfplan
+
+# Real values stay local; commit the .example files instead
+*.tfvars
+!terraform.tfvars.example
+backend.hcl

@@ -32,8 +32,8 @@ outputs freely; change existing ones only together with the app repo.
 
 1. **Remote state.** S3 bucket (versioned, encrypted, public access blocked)
    with S3 native state locking (`use_lockfile = true`). The bucket is created
-   once by a small `bootstrap/` stack with local state; everything else uses
-   the remote backend.
+   once by hand and is not managed by Terraform; the root module uses it as
+   its remote backend.
 2. **Networking, kept cheap.** A small VPC with one public subnet and an
    internet gateway (no NAT gateway). A security group that allows HTTP to the
    app port from anywhere and **no SSH (port 22)**.
@@ -57,9 +57,9 @@ outputs freely; change existing ones only together with the app repo.
    and never land in code or Terraform state.
 7. **Terraform CI.** GitHub Actions in this repo: `fmt -check`, `validate`,
    `tflint` and `plan` on every pull request (plan posted as a PR comment);
-   `apply` on merge to `main`. It uses its own OIDC role (created in
-   `bootstrap/`) trusted only for this repo. No AWS keys stored anywhere.
-8. **Client-style README.** Architecture diagram, bootstrap steps, how to set
+   `apply` on merge to `main`. It uses its own OIDC role (the `terraform_ci_role`
+   module) trusted only for this repo. No AWS keys stored anywhere.
+8. **Client-style README.** Architecture diagram, the manual state bucket and first-apply steps, how to set
    the secret parameters, the outputs table above, how to destroy everything,
    and a monthly cost estimate (Infracost or a hand calculation).
 
@@ -78,7 +78,7 @@ outputs freely; change existing ones only together with the app repo.
 
 | When | Work |
 |---|---|
-| Morning | `bootstrap/` (state bucket, Terraform CI OIDC role), VPC, subnet, security group, ECR with lifecycle policy. |
+| Morning | Manual state bucket, VPC, subnet, security group, ECR with lifecycle policy. |
 | Midday | EC2 with instance profile, user_data, Elastic IP; SSM parameters; GitHub OIDC provider and app deploy role; outputs. Confirm the instance shows as managed in SSM Fleet Manager. |
 | Afternoon | Terraform CI workflow (plan on PR, apply on merge), Infracost estimate, README and diagram. Hand outputs to TicTacToeCICD. |
 
@@ -91,11 +91,11 @@ draw.io
 
 ## Definition of done
 
-- [ ] `bootstrap/` creates the state bucket and the Terraform CI role; main stack uses the S3 backend with locking.
+- [ ] State bucket exists (created by hand); the main stack uses it as the S3 backend with locking and creates the GitHub OIDC provider and the Terraform CI role.
 - [ ] `terraform apply` from a clean account creates everything; `terraform destroy` removes it all.
 - [ ] Instance is reachable only through SSM (no port 22, no key pair) and runs Docker + Compose.
 - [ ] App deploy role can push to ECR and run SSM commands on the instance, and nothing more.
 - [ ] Secret values are set outside Terraform and are not in state or the repo.
 - [ ] PR shows `fmt`, `validate`, `tflint` and `plan`; merge to `main` applies.
 - [ ] All six outputs exist and match the app repo's variable table.
-- [ ] README has the diagram, bootstrap and destroy steps, outputs table and cost estimate.
+- [ ] README has the diagram, manual-bucket and destroy steps, outputs table and cost estimate.

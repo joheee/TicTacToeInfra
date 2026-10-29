@@ -13,11 +13,14 @@ and the definition of done.
 
 ## Layout
 
-- `bootstrap/`: state bucket and the Terraform CI OIDC role. Local state, run
-  once by hand.
-- Root module: everything else, S3 backend with `use_lockfile = true`.
-- Keep files split by concern (`network.tf`, `ec2.tf`, `ecr.tf`, `iam.tf`,
-  `ssm.tf`, `outputs.tf`, `variables.tf`, `versions.tf`).
+- The S3 state bucket is created by hand (versioned, encrypted, public access
+  blocked) and is not managed by Terraform.
+- Root module: wires the modules together, S3 backend with `use_lockfile = true`.
+  Keep it to `main.tf`, `variables.tf`, `outputs.tf`, `versions.tf`.
+- `modules/`: one module per concern, each with `main.tf`, `variables.tf`,
+  `outputs.tf`, `versions.tf`: `network`, `ecr`, `ssm_parameters`, `compute`
+  (instance role, EC2, Elastic IP), `github_oidc_provider`,
+  `github_deploy_role`, `terraform_ci_role`.
 
 ## Working rules
 

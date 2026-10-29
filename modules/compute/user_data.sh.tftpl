@@ -1,0 +1,15 @@
+#!/bin/bash
+# Docker + Compose plugin and /opt/app only. Deploys, .env creation and
+# container restarts belong to the app pipeline over SSM.
+set -euo pipefail
+
+dnf install -y docker
+systemctl enable --now docker
+usermod -aG docker ec2-user
+
+mkdir -p /usr/local/lib/docker/cli-plugins
+curl -fsSL "https://github.com/docker/compose/releases/download/${compose_version}/docker-compose-linux-x86_64" \
+  -o /usr/local/lib/docker/cli-plugins/docker-compose
+chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
+mkdir -p /opt/app
