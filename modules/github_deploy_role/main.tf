@@ -15,11 +15,16 @@ data "aws_iam_policy_document" "trust" {
       values   = ["sts.amazonaws.com"]
     }
 
-    # Exact repo and branch, never a wildcard.
+    # Exact repo name and branch. GitHub puts numeric owner/repo ids into the
+    # subject (repo:owner@<id>/name@<id>:...), so the ids are matched with `*`
+    # while the names and ref stay pinned. The plain form covers the old format.
     condition {
-      test     = "StringEquals"
+      test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_repo}:ref:refs/heads/${var.github_branch}"]
+      values = [
+        "repo:${var.github_repo}:ref:refs/heads/${var.github_branch}",
+        "repo:${split("/", var.github_repo)[0]}@*/${split("/", var.github_repo)[1]}@*:ref:refs/heads/${var.github_branch}",
+      ]
     }
   }
 }

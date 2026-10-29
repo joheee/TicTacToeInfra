@@ -23,12 +23,18 @@ data "aws_iam_policy_document" "trust" {
       values   = ["sts.amazonaws.com"]
     }
 
+    # GitHub puts numeric owner/repo ids into the subject
+    # (repo:owner@<id>/name@<id>:...). StringLike lets the ids vary while the
+    # owner name, repo name and ref stay pinned. The plain form is kept for
+    # repos that still use the old subject format.
     condition {
-      test     = "StringEquals"
+      test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
       values = [
         "repo:${var.github_repo}:ref:refs/heads/${var.github_branch}",
         "repo:${var.github_repo}:pull_request",
+        "repo:${split("/", var.github_repo)[0]}@*/${split("/", var.github_repo)[1]}@*:ref:refs/heads/${var.github_branch}",
+        "repo:${split("/", var.github_repo)[0]}@*/${split("/", var.github_repo)[1]}@*:pull_request",
       ]
     }
   }
