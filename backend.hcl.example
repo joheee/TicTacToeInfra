@@ -1,0 +1,5 @@
+# Copy to backend.hcl (git-ignored). The bucket is created by hand.
+# terraform init -backend-config=backend.hcl
+# main.tf also reads the bucket name from this file, so keep the line format.
+bucket = "tictactoe-tfstate-001"
+region = "ap-southeast-2"

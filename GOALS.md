@@ -28,6 +28,14 @@ its GitHub Actions repository variables:
 Renaming or removing an output is a breaking change for the app repo. Add new
 outputs freely; change existing ones only together with the app repo.
 
+## Responsibilities
+
+This repo only provisions AWS and grants permissions. The app repo owns CI and CD:
+building images, pushing to ECR, deploying over SSM, smoke tests and rollback.
+The deploy role here is the identity that pipeline assumes; nothing in this
+repo pushes an image. Everything runs in `ap-southeast-2` because the account's
+Organizations SCP restricts other regions.
+
 ## Objectives
 
 1. **Remote state.** S3 bucket (versioned, encrypted, public access blocked)
@@ -36,7 +44,8 @@ outputs freely; change existing ones only together with the app repo.
    its remote backend.
 2. **Networking, kept cheap.** A small VPC with one public subnet and an
    internet gateway (no NAT gateway). A security group that allows HTTP to the
-   app port from anywhere and **no SSH (port 22)**.
+   app port (80) and HTTPS (443, ready for the planned reverse proxy) from
+   anywhere and **no SSH (port 22)**.
 3. **EC2 instance managed by SSM.** Amazon Linux 2023 (SSM agent built in),
    small instance size, Elastic IP for a stable `app_url`, encrypted root
    volume, IMDSv2 required. `user_data` installs Docker and the Compose plugin
@@ -57,10 +66,11 @@ outputs freely; change existing ones only together with the app repo.
    and never land in code or Terraform state.
 7. **Terraform CI.** GitHub Actions in this repo: `fmt -check`, `validate`,
    `tflint` and `plan` on every pull request (plan posted as a PR comment);
-   `apply` on merge to `main`. It uses its own OIDC role (the `terraform_ci_role`
+   `apply` on merge to `main`. The workflow writes `backend.hcl` before `init`
+   (git-ignored locally). It uses its own OIDC role (the `terraform_ci_role`
    module) trusted only for this repo. No AWS keys stored anywhere.
 8. **Client-style README.** Architecture diagram, the manual state bucket and first-apply steps, how to set
-   the secret parameters, the outputs table above, how to destroy everything,
+   the secret parameters, the outputs table above (plus the extra `terraform_ci_role_arn`), how to destroy everything,
    and a monthly cost estimate (Infracost or a hand calculation).
 
 ## Out of scope
@@ -69,8 +79,9 @@ outputs freely; change existing ones only together with the app repo.
   bigger AWS foundation). Postgres runs in Compose on the instance.
 - Multiple environments. One `prod` environment is enough here; the README can
   note how a `staging` workspace or directory would be added.
-- HTTPS and a custom domain. Optional stretch: Route 53 + an ALB or Caddy on the
-  instance. Until then the app pipeline keeps `COOKIE_SECURE=false`.
+- HTTPS and a custom domain setup. Port 443 is already open; the reverse proxy
+  (e.g. Caddy on the instance) and the subdomain A record to the Elastic IP are
+  done later, outside this repo. Until then the app pipeline keeps `COOKIE_SECURE=false`.
 - Anything inside the instance beyond Docker setup. Deploys, `.env` creation and
   container restarts belong to the app pipeline over SSM.
 
