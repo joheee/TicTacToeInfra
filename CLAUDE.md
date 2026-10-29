@@ -43,13 +43,24 @@ and the definition of done.
   this stack. The CI role only reads the OIDC provider; changing it is a local apply.
 - Least privilege: scope IAM policies to specific ARNs (the ECR repo, the
   instance, the parameter path). Explain any `"*"` resource in a comment.
-- OIDC trust policies pin the exact repo and branch
+- OIDC trust policies pin the exact repo name and branch
   (`repo:joheee/TicTacToeCICD:ref:refs/heads/main`); never `repo:joheee/*`.
+  GitHub puts numeric ids in the token subject
+  (`repo:joheee@<id>/TicTacToeInfra@<id>:ref:refs/heads/main`), so subject
+  conditions use `StringLike` with `@*` for the ids plus the plain form. A
+  "Not authorized to perform sts:AssumeRoleWithWebIdentity" error is a subject
+  mismatch: read the real subject from CloudTrail (`AssumeRoleWithWebIdentity`).
 - Outputs are a contract with the app repo. Don't rename or remove the outputs
   listed in `GOALS.md`; add new ones and note them in the README (`terraform_ci_role_arn` is the
   one extra output so far).
 - Pin the Terraform and provider versions in `versions.tf`.
 - Run `terraform fmt` and `terraform validate` before every commit.
+- CI lives in `.github/workflows/terraform.yml` (checks, plan on PR with a PR
+  comment, apply on push to `main`) and `.tflint.hcl`. It needs the repo
+  variables `AWS_REGION`, `TF_STATE_BUCKET` and `TF_CI_ROLE_ARN` (the
+  `terraform_ci_role_arn` output, not the deploy role) and writes `backend.hcl`
+  at run time. The apply job hides Terraform output unless the apply fails.
+  Changing the CI role's trust or permissions needs a local apply.
 - Never run `terraform apply` or `destroy` without being asked; show the plan
   first.
 - Tick the boxes in the GOALS.md "Definition of done" as items are finished.

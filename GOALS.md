@@ -66,9 +66,12 @@ Organizations SCP restricts other regions.
    and never land in code or Terraform state.
 7. **Terraform CI.** GitHub Actions in this repo: `fmt -check`, `validate`,
    `tflint` and `plan` on every pull request (plan posted as a PR comment);
-   `apply` on merge to `main`. The workflow writes `backend.hcl` before `init`
-   (git-ignored locally). It uses its own OIDC role (the `terraform_ci_role`
-   module) trusted only for this repo. No AWS keys stored anywhere.
+   `apply` on merge to `main` (its output is hidden unless it fails). The workflow
+   (`.github/workflows/terraform.yml`, with `.tflint.hcl`) writes `backend.hcl`
+   before `init` (git-ignored locally) and reads the repo variables `AWS_REGION`,
+   `TF_STATE_BUCKET` and `TF_CI_ROLE_ARN`. It uses its own OIDC role (the `terraform_ci_role`
+   module) trusted only for this repo (name and branch pinned; GitHub's
+   id-based token subject is matched with `@*` for the ids). No AWS keys stored anywhere.
 8. **Client-style README.** Architecture diagram, the manual state bucket and first-apply steps, how to set
    the secret parameters, the outputs table above (plus the extra `terraform_ci_role_arn`), how to destroy everything,
    and a monthly cost estimate (Infracost or a hand calculation).
@@ -91,7 +94,7 @@ Organizations SCP restricts other regions.
 |---|---|
 | Morning | Manual state bucket, VPC, subnet, security group, ECR with lifecycle policy. |
 | Midday | EC2 with instance profile, user_data, Elastic IP; SSM parameters; GitHub OIDC provider and app deploy role; outputs. Confirm the instance shows as managed in SSM Fleet Manager. |
-| Afternoon | Terraform CI workflow (plan on PR, apply on merge), Infracost estimate, README and diagram. Hand outputs to TicTacToeCICD. |
+| Afternoon | Terraform CI workflow (written; needs a first local apply and repo variables), Infracost estimate, README and diagram. Hand outputs to TicTacToeCICD. |
 
 ## Tools and software
 
