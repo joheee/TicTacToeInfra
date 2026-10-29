@@ -146,4 +146,12 @@ jobs:
 
       - run: terraform init -backend-config=backend.hcl -input=false
 
-      - run: terraform apply -input=false -auto-approve
+      # Output is kept out of the log (it can include resource details); it is
+      # printed only if the apply fails so errors stay debuggable.
+      - name: Apply
+        run: |
+          if ! terraform apply -input=false -auto-approve -no-color > apply.log 2>&1; then
+            cat apply.log
+            exit 1
+          fi
+          echo "Apply succeeded."
