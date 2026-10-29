@@ -61,6 +61,18 @@ resource "aws_vpc_security_group_ingress_rule" "app_http" {
   cidr_ipv4         = "0.0.0.0/0"
 }
 
+# For the planned HTTPS reverse proxy on the instance. Port 80 above stays open
+# for certificate issuance and the HTTP-to-HTTPS redirect. Nothing listens on
+# 443 until the proxy is set up.
+resource "aws_vpc_security_group_ingress_rule" "app_https" {
+  security_group_id = aws_security_group.app.id
+  description       = "HTTPS from anywhere"
+  ip_protocol       = "tcp"
+  from_port         = 443
+  to_port           = 443
+  cidr_ipv4         = "0.0.0.0/0"
+}
+
 # Outbound is open because there are no VPC endpoints or NAT: the instance
 # must reach SSM, ECR, Docker/Compose downloads and OS repos over the internet.
 resource "aws_vpc_security_group_egress_rule" "all" {
