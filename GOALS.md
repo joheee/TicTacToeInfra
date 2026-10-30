@@ -112,4 +112,4 @@ draw.io
 - [ ] Secret values are set outside Terraform and are not in state or the repo.
 - [ ] PR shows `fmt`, `validate`, `tflint` and `plan`; merge to `main` applies.
 - [ ] All six outputs exist and match the app repo's variable table.
-- [ ] README has the diagram, manual-bucket and destroy steps, outputs table and cost estimate.
+- [x] README has the diagram, manual-bucket and destroy steps, outputs table and cost estimate.
